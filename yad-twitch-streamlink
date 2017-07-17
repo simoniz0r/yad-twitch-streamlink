@@ -22,7 +22,7 @@ CHAT="/usr/bin/google-chrome"
 CHATARGS=""
 
 updatefunc () {
-    yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --title="yad-twitch-streamlink" --text-align=center --borders=300 --width=1280 --height=720 --info --no-buttons --timeout=2 --timeout-indicator="bottom" --text="Checking for update..."
+    yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --title="yad-twitch-streamlink" --text-align=center --borders=300 --width=1280 --height=720 --info --no-buttons --timeout=2 --timeout-indicator="bottom" --text="Checking for update..." &
     UPNOTES="$(wget -q "https://raw.githubusercontent.com/simoniz0r/yad-twitch-streamlink/master/yad-twitch-streamlink" -O - | sed -n '10p' | tr -d 'X="')"
     VERTEST="$(wget -q "https://raw.githubusercontent.com/simoniz0r/yad-twitch-streamlink/master/yad-twitch-streamlink" -O - | sed -n '9p' | tr -d 'YTSVER="')"
     if [[ $YTSVER < $VERTEST ]]; then
