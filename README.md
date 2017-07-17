@@ -5,13 +5,13 @@ Streamlink path and arguments, chat program and arguments, and video player prog
 
 The config file is stored in `~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf` and pictures for the stream list are temporarily stored in `~/.config/yad-twitch-streamlink/cache/` while the stream list is open.
 
-`streamlink --twitch-oauth-authenticate` is used to get your Twitch token for the stream list and for authenticating when viewing the stream.  
+`streamlink --twitch-oauth-authenticate` is used to get your Twitch token for the stream list and for authenticating when viewing streams.  
 
-If you do not have Streamlink installed, [an alternate site](http://twitchapps.com/tmi/) will be opened for you to get your Twitch token from.  The token from this site will not work with Streamlink, so if you wish to use Streamlink later, you will have to generate a new token in yad-twitch-streamlink's settings menu.
+If you do not have Streamlink installed, [an alternate site](http://twitchapps.com/tmi/) will be opened for you to get your Twitch token.  The token from this site will not work with Streamlink, so if you wish to use Streamlink later, you will have to generate a new token in yad-twitch-streamlink's settings menu.
 
-yad-twitch-streamlink can also play Twitch streams without Streamlink by using mpv directly.
+yad-twitch-streamlink can also play Twitch streams without Streamlink by using mpv directly, although Streamlink usually provides less delay and better playback in general than using mpv alone.
 
-Supported chat programs are Chrome/Chromium and Chatty.  Other Twitch chat apps or web browsers should also work with the proper arguments for them.  You can also choose to not have chat launched when the stream is opened.
+Supported chat programs are Chatty and Chrome/Chromium.  Other Twitch chat apps or web browsers should also work with the proper arguments for them.  You can also choose to not have chat launched when the stream is opened.
 
 Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
 
