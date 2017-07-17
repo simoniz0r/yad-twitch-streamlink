@@ -4,3 +4,5 @@ After selecting a stream, yad-twitch-streamlink opens Streamlink with the config
 Streamlink path and arguments, chat program and arguments, and video player program and arguments are all configurable in the GUI or in the conf file.
 
 Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
+
+[yad-twitch-streamlink preview video](https://raw.githubusercontent.com/simoniz0r/yad-twitch-streamlink/master/yad-twitch-streamlink.webm)
