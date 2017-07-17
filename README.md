@@ -33,4 +33,4 @@ Help window (opens a browser for help pages for Streamlink, mpv, and Chatty):
 
 ![yad-twitch-streamlink help window](/screenshots/help.png)
 
-[yad-twitch-streamlink preview video](https://raw.githubusercontent.com/simoniz0r/yad-twitch-streamlink/master/yad-twitch-streamlink.webm)
+[yad-twitch-streamlink preview video](https://raw.githubusercontent.com/simoniz0r/yad-twitch-streamlink/master/screenshots/yad-twitch-streamlink.webm)
