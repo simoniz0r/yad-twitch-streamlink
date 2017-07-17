@@ -28,6 +28,7 @@ updatefunc () {
     if [[ $YTSVER < $VERTEST ]]; then
         echo "Latest version: $VERTEST" > ~/.config/yad-twitch-streamlink/cache/updatecheck.txt
         echo "Installed version: $YTSVER" >> ~/.config/yad-twitch-streamlink/cache/updatecheck.txt
+        echo "$UPNOTES" >> ~/.config/yad-twitch-streamlink/cache/updatecheck.txt
         echo "An update for yad-twitch-streamlink is available!" >> ~/.config/yad-twitch-streamlink/cache/updatecheck.txt
         echo "Click the link below to download the latest version." >> ~/.config/yad-twitch-streamlink/cache/updatecheck.txt
         echo "https://github.com/simoniz0r/yad-twitch-streamlinkreleases/latest" >> ~/.config/yad-twitch-streamlink/cache/updatecheck.txt
