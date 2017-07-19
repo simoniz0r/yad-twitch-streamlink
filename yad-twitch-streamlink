@@ -186,7 +186,7 @@ main () { # main stream list
             echo ~/.config/yad-twitch-streamlink/twitchlogo.png >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         fi
         echo "$STREAMNAME" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "$(echo "$TITLES" | sed -n "${STARTNUM}p" | tr -dc '[:alnum:] \n')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "$(echo "$TITLES" | sed -n "${STARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         echo "$(echo "$GAMES" | sed -n "${GAMESSTARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         echo "$(echo "$VIEWERS" | sed -n "${STARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         echo "$(echo "$STREAMTYPES" | sed -n "${STARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
