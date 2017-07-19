@@ -174,10 +174,10 @@ main () { # main stream list
     PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f2,3 -d":")"
     LIVESTREAMS="$(echo "$LIVELIST" | grep -Po '"name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
     LIVESTREAMSNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
-    TITLES="$( echo "$LIVELIST" | grep -Po '"status":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | cut -f2 -d":")"
+    TITLES="$( echo "$LIVELIST" | grep -Po '"status":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | sed "s:u003e:>:g" | cut -f2 -d":")"
     GAMES="$(echo "$LIVELIST" | grep -Po '"game":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | cut -f2 -d":")"
     VIEWERS="$(echo "$LIVELIST" | grep -Po '"viewers":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
-    STREAMTYPES="$(echo "$LIVELIST" | grep -Po '"stream_type":.*?[^\\]"' | tr -d '"' | sed "s:live:Live:g" | sed "s:watch_party:VOD:g" | cut -f2 -d":")"
+    STREAMTYPES="$(echo "$LIVELIST" | grep -Po '"stream_type":.*?[^\\]"' | tr -d '"' | sed "s:live:Live:g" | sed "s:watch_party:VODCast:g" | cut -f2 -d":")"
     STARTNUM=1
     GAMESSTARTNUM=1
     for STREAMNAME in $LIVESTREAMSNAMES; do
