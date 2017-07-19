@@ -6,8 +6,8 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
 # License: GPLv2 only
 
-YTSVER="0.0.5"
-X="Add stream title to stream list."
+YTSVER="0.0.6"
+X="Fix only 25 streams showing in list.  100 will now show.  Issue #2."
 
 YTSLOC="$0"
 STREAMLINKENABLED="TRUE"
