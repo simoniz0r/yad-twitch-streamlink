@@ -35,7 +35,7 @@ updatefunc () {
         echo "An update for yad-twitch-streamlink is available!" >> ~/.config/yad-twitch-streamlink/cache/updatecheck.txt
         echo "Click the link below to download the latest version." >> ~/.config/yad-twitch-streamlink/cache/updatecheck.txt
         echo "https://github.com/simoniz0r/yad-twitch-streamlink/releases/latest" >> ~/.config/yad-twitch-streamlink/cache/updatecheck.txt
-        yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --title="yad-twitch-streamlink" --show-uri --width=1280 --height=720 --text-info --justify=center --borders=200 --filename="$HOME/.config/yad-twitch-streamlink/cache/updatecheck.txt" --button=gtk-cancel:1 --button=gtk-ok:0
+        yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --title="yad-twitch-streamlink" --show-uri --width=1280 --height=720 --text-info --justify=center --filename="$HOME/.config/yad-twitch-streamlink/cache/updatecheck.txt" --button=gtk-cancel:1 --button=gtk-ok:0
         case $? in
             0) # exit so update can be installed
                 yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --title="yad-twitch-streamlink" --text-align=center --borders=300 --width=1280 --height=720 --info --no-buttons --timeout=3 --timeout-indicator="bottom" --text="yad-twitch-streamlink will now close so you can install the latest version."
