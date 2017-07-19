@@ -143,10 +143,10 @@ settingsfunc () { # Edit settings for yad-twitch-streamlink, generate new token,
 
 notificationsfunc () {
     while true; do
-        LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed')"
+        LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
         NOTIFNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":" | sort -h)"
         sleep "$NOTIFTIME"
-        LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed')"
+        LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
         NOTIFNAMESNEW="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":" | sort -h)"
         if [[ "$NOTIFNAMES" != "$NOTIFNAMESNEW" ]]; then
             NEWSTREAMS="$(diff <(echo "$NOTIFNAMES") <(echo "$NOTIFNAMESNEW") | grep '> ' | tr -d '>')"
@@ -166,8 +166,8 @@ main () { # main stream list
     yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --info --timeout="30" --timeout-indicator="bottom" --no-focus --borders=300 --title="yad-twitch-streamlink" --width=1280 --height=720 --no-buttons --text-align=center --text="Loading streams...\nPlease wait." &
     LOADINGBOXPID="$!"
     # Get user's live followed streams using curl and Twitch's API.
-    # LIVELIST="$(curl -sH 'Cache-Control: no-cache' "https://api.twitch.tv/kraken/streams/followed?oauth_token=$TOKEN")"
-    LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed')"
+    # LIVELIST="$(curl -sH 'Cache-Control: no-cache' "https://api.twitch.tv/kraken/streams/followed?oauth_token=$TOKEN&limit=100")"
+    LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
     # Get count of live streams, name, display name, game, viewers, and stream type from $LIVELIST
     # output it to ~/.config/yad-twitch-streamlink/cache/live-list.lst sorted for yad --list to read it
     LIVECOUNT="$(echo "$LIVELIST" | grep -Po '"_total":.*?[^\\]"' |tr -d ',"' | cut -f2 -d":")"
