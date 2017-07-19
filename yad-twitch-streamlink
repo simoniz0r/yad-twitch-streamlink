@@ -6,8 +6,8 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
 # License: GPLv2 only
 
-YTSVER="0.0.4"
-X="Add notifications for streams going live.  Notifications can be enabled/disabled in the settings, the time between checking for new streams, and the notification display time can be configured in the settings menu."
+YTSVER="0.0.5"
+X="Add stream title to stream list."
 
 YTSLOC="$0"
 STREAMLINKENABLED="TRUE"
@@ -172,6 +172,7 @@ main () { # main stream list
     PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f2,3 -d":")"
     LIVESTREAMS="$(echo "$LIVELIST" | grep -Po '"name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
     LIVESTREAMSNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
+    TITLES="$( echo "$LIVELIST" | grep -Po '"status":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | cut -f2 -d":")"
     GAMES="$(echo "$LIVELIST" | grep -Po '"game":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | cut -f2 -d":")"
     VIEWERS="$(echo "$LIVELIST" | grep -Po '"viewers":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
     STREAMTYPES="$(echo "$LIVELIST" | grep -Po '"stream_type":.*?[^\\]"' | tr -d '"' | sed "s:live:Live:g" | sed "s:watch_party:VOD:g" | cut -f2 -d":")"
@@ -185,6 +186,7 @@ main () { # main stream list
             echo ~/.config/yad-twitch-streamlink/twitchlogo.png >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         fi
         echo "$STREAMNAME" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "$(echo "$TITLES" | sed -n "${STARTNUM}p" | tr -dc '[:alnum:] \n')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         echo "$(echo "$GAMES" | sed -n "${GAMESSTARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         echo "$(echo "$VIEWERS" | sed -n "${STARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         echo "$(echo "$STREAMTYPES" | sed -n "${STARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
@@ -199,7 +201,7 @@ main () { # main stream list
             notificationsfunc &
     fi
     # Load stream info from ~/.config/yad-twitch-streamlink/cache/live-list.lst and display it in a list.  Buttons for settings, refresh, and play stream.
-    STREAMSELECTION="$(yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --borders=10 --title="yad-twitch-streamlink" --list --grid-lines=both --print-column=2 --separator="" --width=1280 --height=720 --buttons-layout="edge" --button=gtk-close:1 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="$LIVECOUNT Live streams                              "  --column="Game                                                       " --column="Viewers                              ":NUM --column="Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
+    STREAMSELECTION="$(yad --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --wrap-width=95 --wrap-cols=3,4 --borders=10 --title="yad-twitch-streamlink" --grid-lines=both --print-column=2 --separator="" --width=1280 --height=720 --buttons-layout="edge" --button=gtk-close:1 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="$LIVECOUNT Live streams          " --column="Stream Title                                                  " --column="Game                                   " --column="Viewers          ":NUM --column="Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
     case $? in
         1) # exit
             rm ~/.config/yad-twitch-streamlink/cache/*
