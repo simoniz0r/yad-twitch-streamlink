@@ -39,6 +39,7 @@ updatefunc () {
         case $? in
             0) # exit so update can be installed
                 yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --title="yad-twitch-streamlink" --text-align=center --borders=300 --width=1280 --height=720 --info --no-buttons --timeout=3 --timeout-indicator="bottom" --text="yad-twitch-streamlink will now close so you can install the latest version."
+                killall -SIGTERM yad-twitch-streamlink
                 exit 0
                 ;;
             1) # return back to main without updating
