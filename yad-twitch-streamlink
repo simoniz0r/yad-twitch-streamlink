@@ -6,8 +6,8 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
 # License: GPLv2 only
 
-YTSVER="0.0.6"
-X="Fix only 25 streams showing in list.  100 will now show.  Issue #2."
+YTSVER="0.0.7"
+X="Change wget image preview downloads to happen outside of for loop to decrease load times.  Add title to notification popup window for easier WM management."
 
 YTSLOC="$0"
 STREAMLINKENABLED="TRUE"
@@ -151,7 +151,7 @@ notificationsfunc () {
         if [[ "$NOTIFNAMES" != "$NOTIFNAMESNEW" ]]; then
             NEWSTREAMS="$(diff <(echo "$NOTIFNAMES") <(echo "$NOTIFNAMESNEW") | grep '> ' | tr -d '>')"
             if [ ! -z "$NEWSTREAMS" ]; then
-                yad --info --skip-taskbar --undecorated --geometry=200x150-1-1 --no-focus --button="Open Stream List"\!gtk-ok:0 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
+                yad --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --no-focus --button="Open Stream List"\!gtk-ok:0 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
                 case $? in
                     0)
                         exec "$0"
@@ -172,6 +172,7 @@ main () { # main stream list
     # output it to ~/.config/yad-twitch-streamlink/cache/live-list.lst sorted for yad --list to read it
     LIVECOUNT="$(echo "$LIVELIST" | grep -Po '"_total":.*?[^\\]"' |tr -d ',"' | cut -f2 -d":")"
     PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f2,3 -d":")"
+    PREVIEWIMGNAME="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f5 -d"/")"
     LIVESTREAMS="$(echo "$LIVELIST" | grep -Po '"name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
     LIVESTREAMSNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
     TITLES="$( echo "$LIVELIST" | grep -Po '"status":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | sed "s:u003e:>:g" | cut -f2 -d":")"
@@ -182,8 +183,8 @@ main () { # main stream list
     GAMESSTARTNUM=1
     for STREAMNAME in $LIVESTREAMSNAMES; do
         if [[ "$IMAGEPREVIEWSENABLED" != "FALSE" ]]; then
-            wget --quiet "$( echo "$PREVIEWIMGURL" | sed -n "${STARTNUM}p")" -O ~/.config/yad-twitch-streamlink/cache/"$STREAMNAME".jpg
-            echo ~/.config/yad-twitch-streamlink/cache/"$STREAMNAME".jpg >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+            #wget --quiet "$( echo "$PREVIEWIMGURL" | sed -n "${STARTNUM}p")" -O ~/.config/yad-twitch-streamlink/cache/"$STREAMNAME".jpg
+            echo ~/.config/yad-twitch-streamlink/cache/"$(echo "$PREVIEWIMGNAME" | sed -n "${STARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         else
             echo ~/.config/yad-twitch-streamlink/twitchlogo.png >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         fi
@@ -195,6 +196,11 @@ main () { # main stream list
         STARTNUM="$((1+$STARTNUM))"
         GAMESSTARTNUM="$((2+$GAMESSTARTNUM))"
     done
+    # Download preview images if enabled
+    if [ "$IMAGEPREVIEWSENABLED" = "TRUE" ]; then
+        cd ~/.config/yad-twitch-streamlink/cache
+        echo "$PREVIEWIMGURL" | wget -qi -
+    fi
     # Close loading box
     kill -SIGTERM "$LOADINGBOXPID"
     # Start notification function if enabled and not already running
