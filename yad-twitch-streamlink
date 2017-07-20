@@ -6,10 +6,12 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
 # License: GPLv2 only
 
-YTSVER="0.0.8"
-X="Fix unexpected behavior when running multiple instances."
+YTSVER="0.0.9"
+X="Proper support for multiple instances running instead of just checking if app is running in background."
 
+# Define variable defaults
 APPRUNNING="FALSE"
+BACKGROUNDAPPRUNNING="FALSE"
 YTSLOC="$0"
 STREAMLINKENABLED="TRUE"
 STREAMLINK="$(which streamlink)"
@@ -29,6 +31,7 @@ NOTIFRUNNING="FALSE"
 savesettingsfunc () { # save all settings to ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "TOKEN="\"$TOKEN\""" > ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "APPRUNNING="\"$APPRUNNING\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
+    echo "BACKGROUNDAPPRUNNING="\"$BACKGROUNDAPPRUNNING\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "YTSLOC="\"$YTSLOC\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "STREAMLINKENABLED="\"$STREAMLINKENABLED\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "STREAMLINK="\"$STREAMLINK\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
@@ -133,26 +136,37 @@ settingsfunc () { # Edit settings for yad-twitch-streamlink, generate new token,
 
 notificationsfunc () {
     while true; do
-        LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
-        NOTIFNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":" | sort -h)"
-        sleep "$NOTIFTIME"
-        LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
-        NOTIFNAMESNEW="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":" | sort -h)"
-        if [[ "$NOTIFNAMES" != "$NOTIFNAMESNEW" ]]; then
-            NEWSTREAMS="$(diff <(echo "$NOTIFNAMES") <(echo "$NOTIFNAMESNEW") | grep '> ' | tr -d '>')"
-            if [ ! -z "$NEWSTREAMS" ]; then
-                yad --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --no-focus --button="Open Stream List"\!gtk-ok:0 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
-                case $? in
-                    0)
-                        exec "$0"
-                        ;;
-                esac
+        if [ -f ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf ]; then
+            . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
+        fi
+        if [ "$APPRUNNING" = "TRUE" ] || [ "$BACKGROUNDAPPRUNNING" = "TRUE" ]; then
+            LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
+            NOTIFNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":" | sort -h)"
+            sleep "$NOTIFTIME"
+            LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
+            NOTIFNAMESNEW="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":" | sort -h)"
+            if [[ "$NOTIFNAMES" != "$NOTIFNAMESNEW" ]]; then
+                NEWSTREAMS="$(diff <(echo "$NOTIFNAMES") <(echo "$NOTIFNAMESNEW") | grep '> ' | tr -d '>')"
+                if [ ! -z "$NEWSTREAMS" ]; then
+                    yad --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --no-focus --button="Open Stream List"\!gtk-ok:0 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
+                    case $? in
+                        0)
+                            exec "$0"
+                            ;;
+                    esac
+                fi
             fi
+        else
+            NOTIFRUNNING="FALSE"
+            savesettingsfunc
+            exit 0
         fi
     done
 }
 
 main () { # main stream list
+    APPRUNNING="TRUE"
+    savesettingsfunc
     yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --info --timeout="30" --timeout-indicator="bottom" --no-focus --borders=300 --title="yad-twitch-streamlink" --width=1280 --height=720 --no-buttons --text-align=center --text="Loading streams...\nPlease wait." &
     LOADINGBOXPID="$!"
     # Get user's live followed streams using curl and Twitch's API.
@@ -204,11 +218,8 @@ main () { # main stream list
     case $? in
         1) # exit
             rm ~/.config/yad-twitch-streamlink/cache/*
-            if [[ "$APPRUNNING" != "TRUE" ]] && [ "$NOTIFENABLED" = "TRUE" ]; then # Check if app is running and notifications are enabled, and kill the notifications
-                NOTIFRUNNING="FALSE"
-                savesettingsfunc
-                killall -SIGTERM yad-twitch-streamlink
-            fi
+            APPRUNNING="FALSE"
+            savesettingsfunc
             exit 0
             ;;
         2) # settings
@@ -221,32 +232,32 @@ main () { # main stream list
             ;;
         0) # Execute chat program and Streamlink with configured player and player arguments
             rm ~/.config/yad-twitch-streamlink/cache/*
-            APPRUNNING="TRUE" # Set app as running so if second instance is opened and closed, notifications won't be killed.
+            BACKGROUNDAPPRUNNING="TRUE" # Set app as running so if second instance is opened and closed, notifications won't be killed.
             savesettingsfunc
             if [ ! -z "$STREAMSELECTION" ]; then
                 if [ "$STREAMLINKENABLED" = "FALSE" ]; then
                     case $CHAT in # play streams directly with mpv with configured chat app
                         *chrome*|*chromium*)
                             $CHAT$CHATARGS --app="https://www.twitch.tv/"$STREAMSELECTION"/chat?popout=" & echo "$!" > ~/.config/yad-twitch-streamlink/chromepid.txt & $PLAYER$PLAYERARGS "https://twitch.tv/$STREAMSELECTION" && kill -SIGTERM "$(cat ~/.config/yad-twitch-streamlink/chromepid.txt)" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width=1280 --height=720 --button=gtk-ok:0 --text="Stream failed to load!"; }
-                            APPRUNNING="FALSE"
+                            BACKGROUNDAPPRUNNING="FALSE"
                             savesettingsfunc
                             exec "$YTSLOC"
                             ;;
                         *chatty*|*Chatty*)
                             java -jar $CHAT$CHATARGS -channel "$STREAMSELECTION" & "$PLAYER$PLAYERARGS" "https://twitch.tv/$STREAMSELECTION" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width=1280 --height=720 --button=gtk-ok:0 --text="Stream failed to load!"; }
-                            APPRUNNING="FALSE"
+                            BACKGROUNDAPPRUNNING="FALSE"
                             savesettingsfunc
                             exec "$YTSLOC"
                             ;;
                         "$HOME")
                             "$PLAYER$PLAYERARGS" "https://twitch.tv/$STREAMSELECTION" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width=1280 --height=720 --button=gtk-ok:0 --text="Stream failed to load!"; }
-                            APPRUNNING="FALSE"
+                            BACKGROUNDAPPRUNNING="FALSE"
                             savesettingsfunc
                             exec "$YTSLOC"
                             ;;
                         *)
                             $CHAT$CHATARGS "$STREAMSELECTION" & "$PLAYER$PLAYERARGS" "https://twitch.tv/$STREAMSELECTION" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width=1280 --height=720 --button=gtk-ok:0 --text="Stream failed to load!"; }
-                            APPRUNNING="FALSE"
+                            BACKGROUNDAPPRUNNING="FALSE"
                             savesettingsfunc
                             exec "$YTSLOC"
                             ;;
@@ -255,25 +266,25 @@ main () { # main stream list
                     case $CHAT in # play streams with Streamlink with configured chat app
                         *chrome*|*chromium*)
                             $CHAT$CHATARGS --app="https://www.twitch.tv/"$STREAMSELECTION"/chat?popout=" & echo "$!" > ~/.config/yad-twitch-streamlink/chromepid.txt & $STREAMLINK$STREAMLINKARGS --twitch-oauth-token $TOKEN --player "$PLAYER$PLAYERARGS" https://twitch.tv/"$STREAMSELECTION" "$QUALITY" && kill -SIGTERM "$(cat ~/.config/yad-twitch-streamlink/chromepid.txt)" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width=1280 --height=720 --button=gtk-ok:0 --text="Stream failed to load!"; }
-                            APPRUNNING="FALSE"
+                            BACKGROUNDAPPRUNNING="FALSE"
                             savesettingsfunc
                             exec "$YTSLOC"
                             ;;
                         *chatty*|*Chatty*)
                             java -jar $CHAT$CHATARGS -channel "$STREAMSELECTION" & $STREAMLINK$STREAMLINKARGS --twitch-oauth-token $TOKEN --player "$PLAYER$PLAYERARGS" https://twitch.tv/"$STREAMSELECTION" "$QUALITY" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width=1280 --height=720 --button=gtk-ok:0 --text="Stream failed to load!"; }
-                            APPRUNNING="FALSE"
+                            BACKGROUNDAPPRUNNING="FALSE"
                             savesettingsfunc
                             exec "$YTSLOC"
                             ;;
                         "$HOME")
                             $STREAMLINK$STREAMLINKARGS --twitch-oauth-token $TOKEN --player "$PLAYER$PLAYERARGS" https://twitch.tv/"$STREAMSELECTION" "$QUALITY" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width=1280 --height=720 --button=gtk-ok:0 --text="Stream failed to load!"; }
-                            APPRUNNING="FALSE"
+                            BACKGROUNDAPPRUNNING="FALSE"
                             savesettingsfunc
                             exec "$YTSLOC"
                             ;;
                         *)
                             $CHAT$CHATARGS "$STREAMSELECTION" & $STREAMLINK$STREAMLINKARGS --twitch-oauth-token $TOKEN --player "$PLAYER$PLAYERARGS" https://twitch.tv/"$STREAMSELECTION" "$QUALITY" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width=1280 --height=720 --button=gtk-ok:0 --text="Stream failed to load!"; }
-                            APPRUNNING="FALSE"
+                            BACKGROUNDAPPRUNNING="FALSE"
                             savesettingsfunc
                             exec "$YTSLOC"
                             ;;
