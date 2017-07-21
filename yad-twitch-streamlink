@@ -6,8 +6,8 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
 # License: GPLv2 only
 
-YTSVER="0.1.1"
-X="Revert change move notifications function to separate script.  Previous fixes work with internal function without having to create a separate script."
+YTSVER="0.1.2"
+X="Fix yad-twitch-streamlink launching multiple instances if already running.  Change window size to 1920x1080.  Will add option to set custom size in future update."
 
 # Define variable defaults
 APPRUNNING="FALSE"
