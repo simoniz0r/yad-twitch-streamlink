@@ -295,7 +295,7 @@ while true; do
             yad --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --no-focus --button="Open Stream List"\!gtk-ok:0 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
             case $? in
                 0)
-                    exec "$0"
+                    exec "$YTSLOC"
                     ;;
             esac
         fi
