@@ -280,25 +280,27 @@ wget --quiet "https://www.twitch.tv/favicon.ico" -O ~/.config/yad-twitch-streaml
 cat > ~/.config/yad-twitch-streamlink/yad-twitch-streamlink-notifications << EOL
 #!/bin/bash
 
-if [ -f ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf ]; then
-    . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-fi
-LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
-NOTIFNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":" | sort -h)"
-sleep "$NOTIFTIME"
-LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
-NOTIFNAMESNEW="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":" | sort -h)"
-if [[ "$NOTIFNAMES" != "$NOTIFNAMESNEW" ]]; then
-    NEWSTREAMS="$(diff <(echo "$NOTIFNAMES") <(echo "$NOTIFNAMESNEW") | grep '> ' | tr -d '>')"
-    if [ ! -z "$NEWSTREAMS" ]; then
-        yad --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --no-focus --button="Open Stream List"\!gtk-ok:0 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
-        case $? in
-            0)
-                exec "$0"
-                ;;
-        esac
+while true; do
+    if [ -f ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf ]; then
+        . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     fi
-fi
+    LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
+    NOTIFNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":" | sort -h)"
+    sleep "$NOTIFTIME"
+    LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
+    NOTIFNAMESNEW="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":" | sort -h)"
+    if [[ "$NOTIFNAMES" != "$NOTIFNAMESNEW" ]]; then
+        NEWSTREAMS="$(diff <(echo "$NOTIFNAMES") <(echo "$NOTIFNAMESNEW") | grep '> ' | tr -d '>')"
+        if [ ! -z "$NEWSTREAMS" ]; then
+            yad --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --no-focus --button="Open Stream List"\!gtk-ok:0 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
+            case $? in
+                0)
+                    exec "$0"
+                    ;;
+            esac
+        fi
+    fi
+done
 
 EOL
 chmod +x ~/.config/yad-twitch-streamlink/yad-twitch-streamlink-notifications
