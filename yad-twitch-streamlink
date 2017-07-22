@@ -6,24 +6,26 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
 # License: GPLv2 only
 
-YTSVER="0.1.4"
-X="Fix: Notification process closing when clicking 'Open Stream List' if list is already open. Change: Format settings menu and config file for better display."
+YTSVER="0.1.5"
+X="Change: Stream title is now displayed as a tooltip when hovering over stream. Change: When close buttin is pressed, and stream is playing, user will be prompted to close yad-twitch-streamlink or just stream list. Add: Image preview size setting (small, medium, large). Add: Stream list font setting."
 
 # Define variable defaults
 APPRUNNING="FALSE"
-BACKGROUNDAPPRUNNING="FALSE"
+STREAMRUNNING="FALSE"
 NOTIFRUNNING="FALSE"
 TRAYRUNNING="FALSE"
 YTSLOC="$0"
 WIDTH="1920"
 HEIGHT="1080"
+LISTFONT="'FreeSans Bold 12'"
 STREAMLINKENABLED="TRUE"
 STREAMLINK="$(which streamlink)"
 STREAMLINKARGS=" --player-continuous-http --player-no-close --hls-live-edge 3"
 QUALITY="best"
 PLAYER="$(which mpv)"
 PLAYERARGS=" --cache-secs=0 --no-cache --cache-pause=no --title=Twitch"
-IMAGEPREVIEWSENABLED="TRUE"
+IMGPREVIEWSENABLED="TRUE"
+IMGPREVIEWSIZE="medium"
 CHATENABLED="TRUE"
 CHAT="/usr/bin/google-chrome"
 CHATARGS=""
@@ -41,7 +43,7 @@ savesettingsfunc () { # save all settings to ~/.config/yad-twitch-streamlink/yad
     echo "# If yad-twitch-streamlink will not launch, set any *RUNNING variables to FALSE " >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "# " >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "APPRUNNING="\"$APPRUNNING\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-    echo "BACKGROUNDAPPRUNNING="\"$BACKGROUNDAPPRUNNING\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
+    echo "STREAMRUNNING="\"$STREAMRUNNING\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "NOTIFRUNNING="\"$NOTIFRUNNING\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "TRAYRUNNING="\"$TRAYRUNNING\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "NOTIFPID="\"$NOTIFPID\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
@@ -65,11 +67,13 @@ savesettingsfunc () { # save all settings to ~/.config/yad-twitch-streamlink/yad
     echo "# Settings for yad-twitch-streamlink application " >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "WIDTH="\"$WIDTH\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "HEIGHT="\"$HEIGHT\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
+    echo "LISTFONT="\"$LISTFONT\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "NOTIFENABLED="\"$NOTIFENABLED\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "NOTIFTIME="\"$NOTIFTIME\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "NOTIFTIMEOUT="\"$NOTIFTIMEOUT\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "TRAYENABLED="\"$TRAYENABLED\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-    echo "IMAGEPREVIEWSENABLED="\"$IMAGEPREVIEWSENABLED\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
+    echo "IMGPREVIEWSENABLED="\"$IMGPREVIEWSENABLED\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
+    echo "IMGPREVIEWSIZE="\"$IMGPREVIEWSIZE\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
 }
 
 updatefunc () { # Check for update by downloading script to stdin using wget, then using sed to check the version of the script on github
@@ -104,7 +108,8 @@ helpfunc () { # Open websites for Streamlink, mpv, and Chatty in yad notebook wi
 }
 
 settingsfunc () { # Edit settings for yad-twitch-streamlink, generate new token, view help, and check for updates
-    SETTINGS="$(yad --form --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --title="yad-twitch-streamlink" --separator="," --borders=30 --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --columns="3" --text="<span font_weight='bold'>Settings</span>\n\n* = Requires yad-twitch-streamlink to be restarted to take effect\n" --field="<span font_weight='bold'>Streamlink</span>":LBL "" --field="Streamlink enabled (when disabled, use mpv)":CHK "$STREAMLINKENABLED" --field="     Streamlink path":FL "$STREAMLINK" --field="     Streamlink arguments" "$STREAMLINKARGS" --field="     Streamlink quality":CBE "$QUALITY!best!worst!Other"  --field="\n<span font_weight='bold'>Twitch</span>":LBL "" --field="     Twitch token":H "$TOKEN" --field="":LBL ""  --field="  <span font_weight='bold'>Player</span>":LBL "" --field="     Player path":FL "$PLAYER" --field="     Player arguments" "$PLAYERARGS" --field="\n  <span font_weight='bold'>Chat</span>":LBL "" --field="Launch chat with streams":CHK "$CHATENABLED" --field="     Chat app":FL "$CHAT" --field="     Chat app arguments" "$CHATARGS" --field="":LBL "" --field="  <span font_weight='bold'>yad-twitch-streamlink</span>":LBL "" --field="Load image previews in stream list":CHK "$IMAGEPREVIEWSENABLED" --field="Enable tray icon *":CHK "$TRAYENABLED" --field="Notifications enabled *":CHK "$NOTIFENABLED" --field="     Notification check (seconds) *":NUM "$NOTIFTIME!90..900" --field="     Notification display (seconds) *":NUM "$NOTIFTIMEOUT!1..60" --field="     Window width":NUM "$WIDTH!800..8000" --field="     Window height":NUM "$HEIGHT!600..4000" --button="Back"\!gtk-close:1 --button="Generate token"\!gtk-execute:2 --button=gtk-help:3 --button="Check for Update"\!gtk-refresh:4 --button=gtk-save:0)"
+    LISTFONT="$(echo "$LISTFONT" | tr -d "'")"
+    SETTINGS="$(yad --form --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --title="yad-twitch-streamlink" --separator="," --borders=30 --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --columns="3" --text="<span font_weight='bold'>Settings</span>\n\n* = Requires yad-twitch-streamlink to be restarted to take effect\n" --field="<span font_weight='bold'>Streamlink</span>":LBL "" --field="Streamlink enabled (when disabled, use mpv)":CHK "$STREAMLINKENABLED" --field="     Streamlink path":FL "$STREAMLINK" --field="     Streamlink arguments" "$STREAMLINKARGS" --field="     Streamlink quality":CBE "$QUALITY!best!worst!Custom"  --field="\n<span font_weight='bold'>Twitch</span>":LBL "" --field="     Twitch token":H "$TOKEN" --field="":LBL "" --field="":LBL "" --field="":LBL "" --field="  <span font_weight='bold'>Player</span>":LBL "" --field="     Player path":FL "$PLAYER" --field="     Player arguments" "$PLAYERARGS" --field="\n  <span font_weight='bold'>Chat</span>":LBL "" --field="Launch chat with streams":CHK "$CHATENABLED" --field="     Chat app":FL "$CHAT" --field="     Chat app arguments" "$CHATARGS" --field="":LBL "" --field="":LBL "" --field="":LBL "" --field="  <span font_weight='bold'>yad-twitch-streamlink</span>":LBL "" --field="Load image previews in stream list":CHK "$IMGPREVIEWSENABLED" --field="Enable tray icon *":CHK "$TRAYENABLED" --field="Notifications enabled *":CHK "$NOTIFENABLED" --field="     Notification check (seconds) *":NUM "$NOTIFTIME!90..900" --field="     Notification display (seconds) *":NUM "$NOTIFTIMEOUT!1..60" --field="     Window width":NUM "$WIDTH!800..8000" --field="     Window height":NUM "$HEIGHT!600..4000" --field="     Image preview size":CB "$IMGPREVIEWSIZE!small!medium!large" --field="     List font":FN "$LISTFONT" --button="Back"\!gtk-close:1 --button="Generate Token"\!gtk-execute:2 --button=gtk-help:3 --button="Check for Update"\!gtk-refresh:4 --button=gtk-save:0)"
     case $? in
         1) # Don't save
             exec "$YTSLOC"
@@ -128,32 +133,35 @@ settingsfunc () { # Edit settings for yad-twitch-streamlink, generate new token,
             fi
             QUALITY="$(echo "$SETTINGS" | cut -f5 -d"," | tr -d ',')"
             TOKEN="$(echo "$SETTINGS" | cut -f7 -d"," | tr -d ',')"
-            PLAYER="$(echo "$SETTINGS" | cut -f10 -d"," | tr -d ',')"
-            PLAYERARGS="$(echo "$SETTINGS" | cut -f11 -d"," | tr -d ',')"
+            PLAYER="$(echo "$SETTINGS" | cut -f12 -d"," | tr -d ',')"
+            PLAYERARGS="$(echo "$SETTINGS" | cut -f13 -d"," | tr -d ',')"
             if [[ "${PLAYERARGS::1}" != " " ]]; then
                 PLAYERARGS=" $PLAYERARGS"
             fi
-            CHATENABLED="$(echo "$SETTINGS" | cut -f13 -d"," | tr -d ',')"
+            CHATENABLED="$(echo "$SETTINGS" | cut -f15 -d"," | tr -d ',')"
             case $CHATENABLED in
                 TRUE)
-                    CHATARGS="$(echo "$SETTINGS" | cut -f15 -d"," | tr -d ',')"
+                    CHATARGS="$(echo "$SETTINGS" | cut -f17 -d"," | tr -d ',')"
                     if [[ "${CHATARGS::1}" != " " ]]; then
                         CHATARGS=" $CHATARGS"
                     fi
-                    CHAT="$(echo "$SETTINGS" | cut -f14 -d"," | tr -d ',')"
+                    CHAT="$(echo "$SETTINGS" | cut -f16 -d"," | tr -d ',')"
                     ;;
                 FALSE)
-                    CHATARGS="$(echo "$SETTINGS" | cut -f15 -d"," | tr -d ',')"
+                    CHATARGS="$(echo "$SETTINGS" | cut -f17 -d"," | tr -d ',')"
                     CHAT="$HOME/"
                     ;;
             esac
-            IMAGEPREVIEWSENABLED="$(echo "$SETTINGS" | cut -f18 -d"," | tr -d ',')"
-            TRAYENABLED="$(echo "$SETTINGS" | cut -f19 -d"," | tr -d ',')"
-            NOTIFENABLED="$(echo "$SETTINGS" | cut -f20 -d"," | tr -d ',')"
-            NOTIFTIME="$(echo "$SETTINGS" | cut -f21 -d"," | tr -d ',')"
-            NOTIFTIMEOUT="$(echo "$SETTINGS" | cut -f22 -d"," | tr -d ',')"
-            WIDTH="$(echo "$SETTINGS" | cut -f23 -d"," | tr -d ',')"
-            HEIGHT="$(echo "$SETTINGS" | cut -f24 -d"," | tr -d ',')"
+            IMGPREVIEWSENABLED="$(echo "$SETTINGS" | cut -f22 -d"," | tr -d ',')"
+            TRAYENABLED="$(echo "$SETTINGS" | cut -f23 -d"," | tr -d ',')"
+            NOTIFENABLED="$(echo "$SETTINGS" | cut -f24 -d"," | tr -d ',')"
+            NOTIFTIME="$(echo "$SETTINGS" | cut -f25 -d"," | tr -d ',')"
+            NOTIFTIMEOUT="$(echo "$SETTINGS" | cut -f26 -d"," | tr -d ',')"
+            WIDTH="$(echo "$SETTINGS" | cut -f27 -d"," | tr -d ',')"
+            HEIGHT="$(echo "$SETTINGS" | cut -f28 -d"," | tr -d ',')"
+            IMGPREVIEWSIZE="$(echo "$SETTINGS" | cut -f29 -d"," | tr -d ',')"
+            LISTFONT="$(echo "$SETTINGS" | cut -f30 -d"," | tr -d ',')"
+            LISTFONT="'$LISTFONT'"
             savesettingsfunc
             exec "$YTSLOC" settings
             ;;
@@ -187,7 +195,7 @@ notificationsfunc () { # Display notifications for new live streams.
 
 main () { # main stream list
     . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-    # Start notification function if enabled and not already running
+    # Start notification process if not running already
     if [ "$NOTIFENABLED" = "TRUE" ] && [[ "$NOTIFRUNNING" != "TRUE" ]]; then
         notificationsfunc &
         NOTIFPID="$!"
@@ -217,32 +225,44 @@ main () { # main stream list
     # Get count of live streams, name, display name, game, viewers, and stream type from $LIVELIST
     # output it to ~/.config/yad-twitch-streamlink/cache/live-list.lst sorted for yad --list to read it
     LIVECOUNT="$(echo "$LIVELIST" | grep -Po '"_total":.*?[^\\]"' |tr -d ',"' | cut -f2 -d":")"
-    PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f2,3 -d":")"
-    PREVIEWIMGNAME="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f5 -d"/")"
+    case $IMGPREVIEWSIZE in
+        small)
+            PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"small":.*?[^\\]"' | tr -d '"' | cut -f2,3 -d":")"
+            PREVIEWIMGNAME="$(echo "$LIVELIST" | grep -Po '"small":.*?[^\\]"' | tr -d '"' | cut -f5 -d"/")"
+            ;;
+        medium)
+            PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f2,3 -d":")"
+            PREVIEWIMGNAME="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f5 -d"/")"
+            ;;
+        large)
+            PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"large":.*?[^\\]"' | tr -d '"' | cut -f2,3 -d":")"
+            PREVIEWIMGNAME="$(echo "$LIVELIST" | grep -Po '"large":.*?[^\\]"' | tr -d '"' | cut -f5 -d"/")"
+            ;;
+    esac
     LIVESTREAMS="$(echo "$LIVELIST" | grep -Po '"name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
     LIVESTREAMSNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
     TITLES="$( echo "$LIVELIST" | grep -Po '"status":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | sed "s:u003e:>:g" | cut -f2 -d":")"
     GAMES="$(echo "$LIVELIST" | grep -Po '"game":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | cut -f2 -d":")"
-    VIEWERS="$(echo "$LIVELIST" | grep -Po '"viewers":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
+    VIEWERS="$(echo "$LIVELIST" | grep -Po '"viewers":.*?[^\\]"' | tr -d ',"' | cut -f2 -d":")"
     STREAMTYPES="$(echo "$LIVELIST" | grep -Po '"stream_type":.*?[^\\]"' | tr -d '"' | sed "s:live:Live:g" | sed "s:watch_party:VODCast:g" | cut -f2 -d":")"
     STARTNUM=1
     GAMESSTARTNUM=1
     for STREAMNAME in $LIVESTREAMSNAMES; do
-        if [[ "$IMAGEPREVIEWSENABLED" != "FALSE" ]]; then
+        if [[ "$IMGPREVIEWSENABLED" != "FALSE" ]]; then
             echo ~/.config/yad-twitch-streamlink/cache/"$(echo "$PREVIEWIMGNAME" | sed -n "${STARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         else
             echo ~/.config/yad-twitch-streamlink/twitchlogo.png >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         fi
-        echo "$STREAMNAME" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "$(echo "$TITLES" | sed -n "${STARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "$(echo "$GAMES" | sed -n "${GAMESSTARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "$(echo "$VIEWERS" | sed -n "${STARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "$(echo "$STREAMTYPES" | sed -n "${STARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "<span font="$LISTFONT">"$STREAMNAME"</span>$(printf '%-10s')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "<span font="$LISTFONT">$(echo "$TITLES" | sed -n "${STARTNUM}p")</span>" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "<span font="$LISTFONT">$(echo "$GAMES" | sed -n "${GAMESSTARTNUM}p")</span>$(printf '%-10s')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "<span font="$LISTFONT">$(echo "$VIEWERS" | sed -n "${STARTNUM}p")</span>$(printf '%-20s')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "<span font="$LISTFONT">$(echo "$STREAMTYPES" | sed -n "${STARTNUM}p")</span>" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         STARTNUM="$((1+$STARTNUM))"
         GAMESSTARTNUM="$((2+$GAMESSTARTNUM))"
     done
     # Download preview images if enabled
-    if [ "$IMAGEPREVIEWSENABLED" = "TRUE" ]; then
+    if [ "$IMGPREVIEWSENABLED" = "TRUE" ]; then
         cd ~/.config/yad-twitch-streamlink/cache
         echo "$PREVIEWIMGURL" | wget -qi -
     fi
@@ -250,23 +270,40 @@ main () { # main stream list
     kill -SIGTERM "$LOADINGBOXPID"
     # Load stream info from ~/.config/yad-twitch-streamlink/cache/live-list.lst and display it in a list.  Buttons for settings, refresh, and play stream.
     if [ "$TRAYENABLED" = "TRUE" ]; then
-        STREAMSELECTION="$(yad --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --no-escape --wrap-width=95 --wrap-cols=3,4 --borders=10 --title="yad-twitch-streamlink" --grid-lines=both --print-column=2 --separator="" --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --button=gtk-close:1 --button="Minimize to tray"\!gtk-remove:4 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="$LIVECOUNT Live streams          " --column="Stream Title                                                  " --column="Game                                   " --column="Viewers          ":NUM --column="Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
+        STREAMSELECTION="$(yad --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --no-escape --hide-column="3" --tooltip-column="3" --borders=10 --title="yad-twitch-streamlink" --grid-lines=both --print-column=2 --separator="" --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --button=gtk-close:1 --button="Minimize to Tray"\!gtk-remove:4 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="$LIVECOUNT Live streams" --column="Stream Title" --column="Game" --column="Viewers" --column="Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
     else
-        STREAMSELECTION="$(yad --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --no-escape --wrap-width=95 --wrap-cols=3,4 --borders=10 --title="yad-twitch-streamlink" --grid-lines=both --print-column=2 --separator="" --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --button=gtk-close:1 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="$LIVECOUNT Live streams          " --column="Stream Title                                                  " --column="Game                                   " --column="Viewers          ":NUM --column="Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
+        STREAMSELECTION="$(yad --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --no-escape --hide-column="3" --tooltip-column="3" --borders=10 --title="yad-twitch-streamlink" --grid-lines=both --print-column=2 --separator="" --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --button=gtk-close:1 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="$LIVECOUNT Live streams" --column="Stream Title" --column="Game" --column="Viewers" --column="Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
     fi
     case $? in
         1) # exit
             rm ~/.config/yad-twitch-streamlink/cache/*
             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-            if [ "$BACKGROUNDAPPRUNNING" = "FALSE" ]; then
+            if [ "$STREAMRUNNING" = "FALSE" ]; then
                 kill "$NOTIFPID" "$TRAYPID"
                 TRAYRUNNING="FALSE"
                 NOTIFRUNNING="FALSE"
+                APPRUNNING="FALSE"
                 savesettingsfunc
+                exit 0
+            else
+                yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --info --borders=300 --title="yad-twitch-streamlink" --width="$WIDTH" --height="$HEIGHT" --text="yad-twitch-streamlink is still running in the background.\nWould you like to close yad-twitch-streamlink or just the stream list?" --button="Close Stream List"\!gtk-remove:0 --button="Close yad-twitch-streamlink"\!gtk-close:1
+                case $? in
+                    0)
+                        APPRUNNING="FALSE"
+                        savesettingsfunc
+                        exit 0
+                        ;;
+                    1)
+                        APPRUNNING="FALSE"
+                        STREAMRUNNING="FALSE"
+                        TRAYRUNNING="FALSE"
+                        NOTIFRUNNING="FALSE"
+                        savesettingsfunc
+                        kill "$NOTIFPID" "$TRAYPID"
+                        killall yad-twitch-streamlink
+                        ;;
+                esac
             fi
-            APPRUNNING="FALSE"
-            savesettingsfunc
-            exit 0
             ;;
         2) # settings
             rm ~/.config/yad-twitch-streamlink/cache/*
@@ -290,10 +327,11 @@ main () { # main stream list
             echo ""
             ;;
         0) # Execute chat program and Streamlink with configured player and player arguments
+            STREAMSELECTION="$(echo "$STREAMSELECTION" | cut -f2 -d">" | cut -f1 -d"<")" # Remove font formatting from $STREAMSELECTION
             rm ~/.config/yad-twitch-streamlink/cache/*
             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
             APPRUNNING="FALSE"
-            BACKGROUNDAPPRUNNING="TRUE" # Set app as running so if second instance is opened and closed, notifications won't be killed.
+            STREAMRUNNING="TRUE" # Set app as running so if second instance is opened and closed, notifications won't be killed.
             savesettingsfunc
             if [ ! -z "$STREAMSELECTION" ]; then
                 if [ "$STREAMLINKENABLED" = "FALSE" ]; then
@@ -301,7 +339,7 @@ main () { # main stream list
                         *chrome*|*chromium*)
                             $CHAT$CHATARGS --app="https://www.twitch.tv/"$STREAMSELECTION"/chat?popout=" & $PLAYER$PLAYERARGS "https://twitch.tv/$STREAMSELECTION" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width="$WIDTH" --height="$HEIGHT" --button=gtk-ok:0 --text="Stream failed to load!"; }
                             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-                            BACKGROUNDAPPRUNNING="FALSE"
+                            STREAMRUNNING="FALSE"
                             savesettingsfunc
                             if [[ "$APPRUNNING" != "TRUE" ]]; then
                                 exec "$YTSLOC"
@@ -312,7 +350,7 @@ main () { # main stream list
                         *chatty*|*Chatty*)
                             java -jar $CHAT$CHATARGS -channel "$STREAMSELECTION" & "$PLAYER$PLAYERARGS" "https://twitch.tv/$STREAMSELECTION" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width="$WIDTH" --height="$HEIGHT" --button=gtk-ok:0 --text="Stream failed to load!"; }
                             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-                            BACKGROUNDAPPRUNNING="FALSE"
+                            STREAMRUNNING="FALSE"
                             savesettingsfunc
                             if [[ "$APPRUNNING" != "TRUE" ]]; then
                                 exec "$YTSLOC"
@@ -323,7 +361,7 @@ main () { # main stream list
                         "$HOME")
                             "$PLAYER$PLAYERARGS" "https://twitch.tv/$STREAMSELECTION" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width="$WIDTH" --height="$HEIGHT" --button=gtk-ok:0 --text="Stream failed to load!"; }
                             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-                            BACKGROUNDAPPRUNNING="FALSE"
+                            STREAMRUNNING="FALSE"
                             savesettingsfunc
                             if [[ "$APPRUNNING" != "TRUE" ]]; then
                                 exec "$YTSLOC"
@@ -334,7 +372,7 @@ main () { # main stream list
                         *)
                             $CHAT$CHATARGS "$STREAMSELECTION" & "$PLAYER$PLAYERARGS" "https://twitch.tv/$STREAMSELECTION" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width="$WIDTH" --height="$HEIGHT" --button=gtk-ok:0 --text="Stream failed to load!"; }
                             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-                            BACKGROUNDAPPRUNNING="FALSE"
+                            STREAMRUNNING="FALSE"
                             savesettingsfunc
                             if [[ "$APPRUNNING" != "TRUE" ]]; then
                                 exec "$YTSLOC"
@@ -348,7 +386,7 @@ main () { # main stream list
                         *chrome*|*chromium*)
                             $CHAT$CHATARGS --app="https://www.twitch.tv/"$STREAMSELECTION"/chat?popout=" & $STREAMLINK$STREAMLINKARGS --twitch-oauth-token $TOKEN --player "$PLAYER$PLAYERARGS" https://twitch.tv/"$STREAMSELECTION" "$QUALITY" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width="$WIDTH" --height="$HEIGHT" --button=gtk-ok:0 --text="Stream failed to load!"; }
                             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-                            BACKGROUNDAPPRUNNING="FALSE"
+                            STREAMRUNNING="FALSE"
                             savesettingsfunc
                             if [[ "$APPRUNNING" != "TRUE" ]]; then
                                 exec "$YTSLOC"
@@ -359,7 +397,7 @@ main () { # main stream list
                         *chatty*|*Chatty*)
                             java -jar $CHAT$CHATARGS -channel "$STREAMSELECTION" & $STREAMLINK$STREAMLINKARGS --twitch-oauth-token $TOKEN --player "$PLAYER$PLAYERARGS" https://twitch.tv/"$STREAMSELECTION" "$QUALITY" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width="$WIDTH" --height="$HEIGHT" --button=gtk-ok:0 --text="Stream failed to load!"; }
                             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-                            BACKGROUNDAPPRUNNING="FALSE"
+                            STREAMRUNNING="FALSE"
                             savesettingsfunc
                             if [[ "$APPRUNNING" != "TRUE" ]]; then
                                 exec "$YTSLOC"
@@ -370,7 +408,7 @@ main () { # main stream list
                         "$HOME")
                             $STREAMLINK$STREAMLINKARGS --twitch-oauth-token $TOKEN --player "$PLAYER$PLAYERARGS" https://twitch.tv/"$STREAMSELECTION" "$QUALITY" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width="$WIDTH" --height="$HEIGHT" --button=gtk-ok:0 --text="Stream failed to load!"; }
                             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-                            BACKGROUNDAPPRUNNING="FALSE"
+                            STREAMRUNNING="FALSE"
                             savesettingsfunc
                             if [[ "$APPRUNNING" != "TRUE" ]]; then
                                 exec "$YTSLOC"
@@ -381,7 +419,7 @@ main () { # main stream list
                         *)
                             $CHAT$CHATARGS "$STREAMSELECTION" & $STREAMLINK$STREAMLINKARGS --twitch-oauth-token $TOKEN --player "$PLAYER$PLAYERARGS" https://twitch.tv/"$STREAMSELECTION" "$QUALITY" || { yad --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width="$WIDTH" --height="$HEIGHT" --button=gtk-ok:0 --text="Stream failed to load!"; }
                             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-                            BACKGROUNDAPPRUNNING="FALSE"
+                            STREAMRUNNING="FALSE"
                             savesettingsfunc
                             if [[ "$APPRUNNING" != "TRUE" ]]; then
                                 exec "$YTSLOC"
@@ -399,7 +437,7 @@ main () { # main stream list
             *) # exit
             rm ~/.config/yad-twitch-streamlink/cache/*
             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-            if [ "$BACKGROUNDAPPRUNNING" = "FALSE" ]; then
+            if [ "$STREAMRUNNING" = "FALSE" ]; then
                 kill "$NOTIFPID" "$TRAYPID"
                 TRAYRUNNING="FALSE"
                 NOTIFRUNNING="FALSE"
