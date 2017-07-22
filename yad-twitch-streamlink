@@ -254,7 +254,7 @@ main () { # main stream list
             echo ~/.config/yad-twitch-streamlink/twitchlogo.png >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         fi
         echo "$(printf '%-5s')<span font="$LISTFONT">"$STREAMNAME"</span>$(printf '%-5s')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "$(printf '%-5s')<span font="$LISTFONT">$(echo "$TITLES" | sed -n "${STARTNUM}p")</span>" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "<span font="$LISTFONT">$(echo "$TITLES" | sed -n "${STARTNUM}p")</span>" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         echo "$(printf '%-5s')<span font="$LISTFONT">$(echo "$GAMES" | sed -n "${GAMESSTARTNUM}p")</span>$(printf '%-5s')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         echo "$(printf '%-5s')<span font="$LISTFONT">$(echo "$VIEWERS" | sed -n "${STARTNUM}p")</span>$(printf '%-5s')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         echo "$(printf '%-5s')<span font="$LISTFONT">$(echo "$STREAMTYPES" | sed -n "${STARTNUM}p")</span>" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
