@@ -253,11 +253,11 @@ main () { # main stream list
         else
             echo ~/.config/yad-twitch-streamlink/twitchlogo.png >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         fi
-        echo "<span font="$LISTFONT">"$STREAMNAME"</span>$(printf '%-10s')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "<span font="$LISTFONT">$(echo "$TITLES" | sed -n "${STARTNUM}p")</span>" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "<span font="$LISTFONT">$(echo "$GAMES" | sed -n "${GAMESSTARTNUM}p")</span>$(printf '%-10s')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "<span font="$LISTFONT">$(echo "$VIEWERS" | sed -n "${STARTNUM}p")</span>$(printf '%-20s')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "<span font="$LISTFONT">$(echo "$STREAMTYPES" | sed -n "${STARTNUM}p")</span>" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "$(printf '%-5s')<span font="$LISTFONT">"$STREAMNAME"</span>$(printf '%-5s')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "$(printf '%-5s')<span font="$LISTFONT">$(echo "$TITLES" | sed -n "${STARTNUM}p")</span>" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "$(printf '%-5s')<span font="$LISTFONT">$(echo "$GAMES" | sed -n "${GAMESSTARTNUM}p")</span>$(printf '%-5s')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "$(printf '%-5s')<span font="$LISTFONT">$(echo "$VIEWERS" | sed -n "${STARTNUM}p")</span>$(printf '%-5s')" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
+        echo "$(printf '%-5s')<span font="$LISTFONT">$(echo "$STREAMTYPES" | sed -n "${STARTNUM}p")</span>" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
         STARTNUM="$((1+$STARTNUM))"
         GAMESSTARTNUM="$((2+$GAMESSTARTNUM))"
     done
@@ -270,9 +270,9 @@ main () { # main stream list
     kill -SIGTERM "$LOADINGBOXPID"
     # Load stream info from ~/.config/yad-twitch-streamlink/cache/live-list.lst and display it in a list.  Buttons for settings, refresh, and play stream.
     if [ "$TRAYENABLED" = "TRUE" ]; then
-        STREAMSELECTION="$(yad --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --no-escape --hide-column="3" --tooltip-column="3" --borders=10 --title="yad-twitch-streamlink" --grid-lines=both --print-column=2 --separator="" --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --button=gtk-close:1 --button="Minimize to Tray"\!gtk-remove:4 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="$LIVECOUNT Live streams" --column="Stream Title" --column="Game" --column="Viewers" --column="Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
+        STREAMSELECTION="$(yad --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --no-escape --hide-column="3" --tooltip-column="3" --borders=10 --title="yad-twitch-streamlink" --grid-lines=both --print-column=2 --separator="" --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --button=gtk-close:1 --button="Minimize to Tray"\!gtk-remove:4 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="     $LIVECOUNT Live streams" --column="     Stream Title" --column="     Game" --column="     Viewers" --column="     Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
     else
-        STREAMSELECTION="$(yad --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --no-escape --hide-column="3" --tooltip-column="3" --borders=10 --title="yad-twitch-streamlink" --grid-lines=both --print-column=2 --separator="" --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --button=gtk-close:1 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="$LIVECOUNT Live streams" --column="Stream Title" --column="Game" --column="Viewers" --column="Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
+        STREAMSELECTION="$(yad --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --no-escape --hide-column="3" --tooltip-column="3" --borders=10 --title="yad-twitch-streamlink" --grid-lines=both --print-column=2 --separator="" --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --button=gtk-close:1 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="     $LIVECOUNT Live streams" --column="     Stream Title" --column="     Game" --column="     Viewers" --column="     Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
     fi
     case $? in
         1) # exit
