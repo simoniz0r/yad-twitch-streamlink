@@ -39,8 +39,8 @@ savesettingsfunc () { # save all settings to ~/.config/yad-twitch-streamlink/yad
     echo "TOKEN="\"$TOKEN\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "# " >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "# yad-twitch-streamlink status variables. " >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-    echo "# Do not edit these unless you are  having trouble launching the app. " >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-    echo "# If yad-twitch-streamlink will not launch, set any *RUNNING variables to FALSE " >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
+    echo "# DO NOT EDIT THESE. " >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
+    echo "# If yad-twitch-streamlink will not launch, run 'yad-twitch-streamlink start'. " >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "# " >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "APPRUNNING="\"$APPRUNNING\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "STREAMRUNNING="\"$STREAMRUNNING\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
@@ -179,7 +179,7 @@ notificationsfunc () { # Display notifications for new live streams.
         if [[ "$NOTIFNAMES" != "$NOTIFNAMESNEW" ]]; then
             NEWSTREAMS="$(diff <(echo "$NOTIFNAMES") <(echo "$NOTIFNAMESNEW") | grep '> ' | tr -d '>')"
             if [ ! -z "$NEWSTREAMS" ]; then
-                kdialog --title "Now Live:" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:0 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
+                kdialog --title "Now Live:" --icon "$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:0 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
                 case $? in
                     0)
                         . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
@@ -279,7 +279,8 @@ main () { # main stream list
             rm ~/.config/yad-twitch-streamlink/cache/*
             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
             if [ "$STREAMRUNNING" = "FALSE" ]; then
-                kill "$NOTIFPID" "$TRAYPID"
+                kill "$NOTIFPID"
+                kill "$TRAYPID"
                 TRAYRUNNING="FALSE"
                 NOTIFRUNNING="FALSE"
                 APPRUNNING="FALSE"
@@ -299,7 +300,8 @@ main () { # main stream list
                         TRAYRUNNING="FALSE"
                         NOTIFRUNNING="FALSE"
                         savesettingsfunc
-                        kill "$NOTIFPID" "$TRAYPID"
+                        kill "$NOTIFPID"
+                        kill "$TRAYPID"
                         killall yad-twitch-streamlink
                         ;;
                 esac
@@ -450,6 +452,17 @@ main () { # main stream list
     esac
 }
 
+startfunc () { # Function to set all processes running to FALSE in config file in case app closes improperly.
+    APPRUNNING="FALSE"
+    STREAMRUNNING="FALSE"
+    TRAYRUNNING="FALSE"
+    NOTIFRUNNING="FALSE"
+    savesettingsfunc
+    kill "$TRAYPID"
+    kill "$NOTIFPID"
+    exec "$YTSLOC"
+}
+
 # Load config file if it exists
 if [ -f ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf ]; then
     . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
@@ -463,6 +476,9 @@ fi
 case $1 in
     settings) # redirect for settings to avoid calling a function from within a function
         settingsfunc
+        ;;
+    start)
+        startfunc
         ;;
     *) # If token doesn't exist, open browser window to get Oauth token, and save Oauth token to config file
         if [ -z "$TOKEN" ]; then
