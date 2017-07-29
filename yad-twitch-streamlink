@@ -6,8 +6,8 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
 # License: GPLv2 only
 
-YTSVER="0.1.6"
-X="Add: Stream start time to stream list."
+YTSVER="0.1.7"
+X="Add: Search in stream list; just start typing to search for stream names. Fix: When using kdialog for notifications and yad-twitch-streamlink is minimized, app no longer opens itself after notification times out."
 
 # Define variable defaults
 APPRUNNING="FALSE"
@@ -181,9 +181,9 @@ notificationsfunc () { # Display notifications for new live streams.
         if [[ "$NOTIFNAMES" != "$NOTIFNAMESNEW" ]]; then
             NEWSTREAMS="$(diff <(echo "$NOTIFNAMES") <(echo "$NOTIFNAMESNEW") | grep '> ' | tr -d '>')"
             if [ ! -z "$NEWSTREAMS" ]; then
-                kdialog --title "Now Live:" --icon "$HOME/.config/yad-twitch-streamlink/twitchlogomed.png" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:0 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
+                kdialog --title "Now Live:" --icon "$HOME/.config/yad-twitch-streamlink/twitchlogomed.png" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:1 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
                 case $? in
-                    0)
+                    1)
                         . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
                         NOTIFRUNNING="FALSE"
                         savesettingsfunc
@@ -275,9 +275,9 @@ main () { # main stream list
     kill -SIGTERM "$LOADINGBOXPID"
     # Load stream info from ~/.config/yad-twitch-streamlink/cache/live-list.lst and display it in a list.  Buttons for settings, refresh, and play stream.
     if [ "$TRAYENABLED" = "TRUE" ]; then
-        STREAMSELECTION="$(yad --class="yad-twitch-streamlink" --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --no-escape --hide-column="3" --tooltip-column="3" --borders=10 --title="yad-twitch-streamlink" --grid-lines=both --print-column=2 --separator="" --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --button=gtk-close:1 --button="Minimize to Tray"\!gtk-remove:4 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="     $LIVECOUNT Live Streams" --column="     Stream Title" --column="     Game" --column="     Viewers" --column="     Live Since" --column="     Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
+        STREAMSELECTION="$(yad --class="yad-twitch-streamlink" --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --no-escape --hide-column="3" --tooltip-column="3" --borders=10 --title="yad-twitch-streamlink" --grid-lines=vert --search-column="2" --regex-search --print-column="2" --separator="" --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --button=gtk-close:1 --button="Minimize to Tray"\!gtk-remove:4 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="     $LIVECOUNT Live Streams" --column="Stream Title":TIP --column="     Game" --column="     Viewers" --column="     Live Since" --column="     Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
     else
-        STREAMSELECTION="$(yad --class="yad-twitch-streamlink" --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --no-escape --hide-column="3" --tooltip-column="3" --borders=10 --title="yad-twitch-streamlink" --grid-lines=both --print-column=2 --separator="" --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --button=gtk-close:1 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="     $LIVECOUNT Live Streams" --column="     Stream Title" --column="     Game" --column="     Viewers" --column="     Live Since" --column="     Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
+        STREAMSELECTION="$(yad --class="yad-twitch-streamlink" --list --window-icon="$HOME/.config/yad-twitch-streamlink/twitchlogo.png" --no-escape --hide-column="3" --tooltip-column="3" --borders=10 --title="yad-twitch-streamlink" --grid-lines=vert --search-column="2" --regex-search --print-column="2" --separator="" --width="$WIDTH" --height="$HEIGHT" --buttons-layout="edge" --button=gtk-close:1 --button="Settings"\!gtk-preferences:2 --button=gtk-refresh:3 --button="Play Stream"\!gtk-yes:0 --column=" ":IMG --column="     $LIVECOUNT Live Streams" --column="Stream Title":TIP --column="     Game" --column="     Viewers" --column="     Live Since" --column="     Status" --rest="$HOME/.config/yad-twitch-streamlink/cache/live-list.lst")"
     fi
     case $? in
         1) # exit
