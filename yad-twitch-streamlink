@@ -7,7 +7,7 @@
 # License: GPLv2 only
 
 YTSVER="0.1.7"
-X="Add: Search in stream list; just start typing to search for stream names. Fix: When using kdialog for notifications and yad-twitch-streamlink is minimized, app no longer opens itself after notification times out."
+X="Fix: Stream titles with more than one ':' not displaying properly."
 
 # Define variable defaults
 APPRUNNING="FALSE"
@@ -243,7 +243,7 @@ main () { # main stream list
     esac
     LIVESTREAMS="$(echo "$LIVELIST" | grep -Po '"name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
     LIVESTREAMSNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
-    TITLES="$( echo "$LIVELIST" | grep -Po '"status":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | sed "s:u003e: }:g" | sed "s:u003c:{ :g" | cut -f2 -d":")"
+    TITLES="$( echo "$LIVELIST" | grep -Po '"status":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | sed "s:u003e: }:g" | sed "s:u003c:{ :g" | cut -f2,3,4 -d":")"
     GAMES="$(echo "$LIVELIST" | grep -Po '"game":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | cut -f2 -d":")"
     VIEWERS="$(echo "$LIVELIST" | grep -Po '"viewers":.*?[^\\]"' | tr -d ',"' | cut -f2 -d":")"
     STREAMTYPES="$(echo "$LIVELIST" | grep -Po '"stream_type":.*?[^\\]"' | tr -d '"' | sed "s:live:Live:g" | sed "s:watch_party:VODCast:g" | cut -f2 -d":")"
