@@ -6,8 +6,8 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
 # License: GPLv2 only
 
-YTSVER="0.1.8"
-X="Fix: Stream titles with more than one ':' not displaying properly."
+YTSVER="0.1.9"
+X="Fix: Better solution for < and > not displaying; use unicode symbols to replace them."
 
 # Define variable defaults
 APPRUNNING="FALSE"
@@ -229,25 +229,25 @@ main () { # main stream list
     LIVECOUNT="$(echo "$LIVELIST" | grep -Po '"_total":.*?[^\\]"' |tr -d ',"' | cut -f2 -d":")"
     case $IMGPREVIEWSIZE in
         small)
-            PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"small":.*?[^\\]"' | tr -d '"' | cut -f2,3 -d":")"
+            PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"small":.*?[^\\]"' | tr -d '"' | cut -f2- -d":")"
             PREVIEWIMGNAME="$(echo "$LIVELIST" | grep -Po '"small":.*?[^\\]"' | tr -d '"' | cut -f5 -d"/")"
             ;;
         medium)
-            PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f2,3 -d":")"
+            PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f2- -d":")"
             PREVIEWIMGNAME="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f5 -d"/")"
             ;;
         large)
-            PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"large":.*?[^\\]"' | tr -d '"' | cut -f2,3 -d":")"
+            PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"large":.*?[^\\]"' | tr -d '"' | cut -f2- -d":")"
             PREVIEWIMGNAME="$(echo "$LIVELIST" | grep -Po '"large":.*?[^\\]"' | tr -d '"' | cut -f5 -d"/")"
             ;;
     esac
     LIVESTREAMS="$(echo "$LIVELIST" | grep -Po '"name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
     LIVESTREAMSNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
-    TITLES="$( echo "$LIVELIST" | grep -Po '"status":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | sed "s:u003e: }:g" | sed "s:u003c:{ :g" | cut -f2,3,4 -d":")"
+    TITLES="$( echo "$LIVELIST" | grep -Po '"status":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | sed "s:u003e:≫:g" | sed "s:u003c:≪:g" | sed "s:≪3:♥:g" | cut -f2- -d":")"
     GAMES="$(echo "$LIVELIST" | grep -Po '"game":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | cut -f2 -d":")"
     VIEWERS="$(echo "$LIVELIST" | grep -Po '"viewers":.*?[^\\]"' | tr -d ',"' | cut -f2 -d":")"
     STREAMTYPES="$(echo "$LIVELIST" | grep -Po '"stream_type":.*?[^\\]"' | tr -d '"' | sed "s:live:Live:g" | sed "s:watch_party:VODCast:g" | cut -f2 -d":")"
-    UTCSTARTTIME="$(echo "$LIVELIST" | grep -Po '"created_at":.*?[^\\]"' | tr -d '"' | cut -f2,3,4 -d":")"
+    UTCSTARTTIME="$(echo "$LIVELIST" | grep -Po '"created_at":.*?[^\\]"' | tr -d '"' | cut -f2- -d":")"
     STARTNUM=1
     ODDSTARTNUM=1
     for STREAMNAME in $LIVESTREAMSNAMES; do
