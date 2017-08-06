@@ -6,8 +6,8 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
 # License: GPLv2 only
 
-YTSVER="0.1.9"
-X="Fix: Better solution for < and > not displaying; use unicode symbols to replace them."
+YTSVER="0.2.0"
+X="Fix tray icon not launching stream list when clicked."
 
 # Define variable defaults
 APPRUNNING="FALSE"
@@ -207,7 +207,7 @@ main () { # main stream list
     # Start tray process if enabled and not running already
     if [ "$TRAYENABLED" = "TRUE" ] && [[ "$TRAYRUNNING" != "TRUE" ]]; then 
         . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-        yad --notification --image="$HOME/.config/yad-twitch-streamlink/ytsicon.png" --text="yad-twitch-streamlink" --command="bash -c /usr/bin/yad-twitch-streamlink" --no-middle --item-separator="," --menu="Open Stream List,bash -c $YTSLOC,$HOME/.config/yad-twitch-streamlink/ytsicon.png" &
+        yad --notification --image="$HOME/.config/yad-twitch-streamlink/ytsicon.png" --text="yad-twitch-streamlink" --command="bash -c $YTSLOC" --no-middle --item-separator="," --menu="Open Stream List,bash -c $YTSLOC,$HOME/.config/yad-twitch-streamlink/ytsicon.png" &
         TRAYPID="$!"
         TRAYRUNNING="TRUE"
         savesettingsfunc
