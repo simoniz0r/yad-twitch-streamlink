@@ -13,7 +13,7 @@ yad-twitch-streamlink can also play Twitch streams without Streamlink by using m
 
 Supported chat programs are Chatty and Chrome/Chromium.  Other Twitch chat apps or web browsers should also work with the proper arguments for them.  You can also choose to not have chat launched when the stream is opened.
 
-Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
+Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, wget
 
 
 

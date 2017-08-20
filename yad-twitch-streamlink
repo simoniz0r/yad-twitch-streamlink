@@ -3,10 +3,10 @@
 # Description: yad-twitch-streamlink is a bash script that uses yad for a GUI.  It lists the users followed Twitch streams.
 # Description: After selecting a stream, it opens Streamlink with the configured player and also opens the configured chat program.
 # Description: Streamlink path and arguments, chat program and arguments, and video player program and arguments are all configurable in the GUI or in the conf file.
-# Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, curl, wget
+# Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, wget
 # License: GPLv2 only
 
-YTSVER="0.2.0"
+YTSVER="0.2.1"
 X="Fix tray icon not launching stream list when clicked."
 
 # Define variable defaults
@@ -181,7 +181,7 @@ notificationsfunc () { # Display notifications for new live streams.
         if [[ "$NOTIFNAMES" != "$NOTIFNAMESNEW" ]]; then
             NEWSTREAMS="$(diff <(echo "$NOTIFNAMES") <(echo "$NOTIFNAMESNEW") | grep '> ' | tr -d '>')"
             if [ ! -z "$NEWSTREAMS" ]; then
-                kdialog --title "Now Live:" --icon "$HOME/.config/yad-twitch-streamlink/twitchlogomed.png" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:1 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
+                kdialog --title "Now Live:" --icon "$HOME/.config/yad-twitch-streamlink/ytslogo.png" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:1 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
                 case $? in
                     1)
                         . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
@@ -223,7 +223,7 @@ main () { # main stream list
     LOADINGBOXPID="$!"
     # Get user's live followed streams using curl and Twitch's API.
     # LIVELIST="$(curl -sH 'Cache-Control: no-cache' "https://api.twitch.tv/kraken/streams/followed?oauth_token=$TOKEN&limit=100")"
-    LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
+    LIVELIST="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O -)"
     # Get count of live streams, name, display name, game, viewers, and stream type from $LIVELIST
     # output it to ~/.config/yad-twitch-streamlink/cache/live-list.lst sorted for yad --class="yad-twitch-streamlink" --list to read it
     LIVECOUNT="$(echo "$LIVELIST" | grep -Po '"_total":.*?[^\\]"' |tr -d ',"' | cut -f2 -d":")"
