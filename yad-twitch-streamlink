@@ -6,8 +6,8 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, wget
 # License: GPLv2 only
 
-YTSVER="0.2.1"
-X="Fix tray icon not launching stream list when clicked."
+YTSVER="0.2.2"
+X="Change use jq to parse Twitch API"
 
 # Define variable defaults
 APPRUNNING="FALSE"
@@ -15,6 +15,7 @@ STREAMRUNNING="FALSE"
 NOTIFRUNNING="FALSE"
 TRAYRUNNING="FALSE"
 YTSLOC="$0"
+RUNNING_DIR="$(dirname $(readlink -f $YTSLOC))"
 WIDTH="1920"
 HEIGHT="1080"
 LISTFONT="'FreeSans Bold 12'"
@@ -173,15 +174,13 @@ settingsfunc () { # Edit settings for yad-twitch-streamlink, generate new token,
 notificationsfunc () { # Display notifications for new live streams.
     while true; do
         . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-        LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
-        NOTIFNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":" | sort -h)"
+        LIVELIST1="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r ".streams[].channel.display_name" | sort)"
         sleep "$NOTIFTIME"
-        LIVELIST="$(curl -sH 'Accept: application/vnd.twitchtv.v5+json' -sH "Authorization: OAuth $TOKEN" -sX GET 'https://api.twitch.tv/kraken/streams/followed?limit=100')"
-        NOTIFNAMESNEW="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":" | sort -h)"
-        if [[ "$NOTIFNAMES" != "$NOTIFNAMESNEW" ]]; then
-            NEWSTREAMS="$(diff <(echo "$NOTIFNAMES") <(echo "$NOTIFNAMESNEW") | grep '> ' | tr -d '>')"
+        LIVELISTNEW="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r ".streams[].channel.display_name" | sort)"
+        if [[ "$LIVELIST" != "$LIVELISTNEW" ]]; then
+            NEWSTREAMS="$(diff <(echo "$LIVELIST1") <(echo "$LIVELISTNEW") | grep '> ' | tr -d '>')"
             if [ ! -z "$NEWSTREAMS" ]; then
-                kdialog --title "Now Live:" --icon "$HOME/.config/yad-twitch-streamlink/ytslogo.png" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:1 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
+                kdialog --title "Now Live:" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:1 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
                 case $? in
                     1)
                         . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
@@ -221,55 +220,16 @@ main () { # main stream list
     fi
     yad --class="yad-twitch-streamlink" --window-icon="$HOME/.config/yad-twitch-streamlink/ytsicon.png" --info --timeout="30" --timeout-indicator="bottom" --no-focus --borders=300 --title="yad-twitch-streamlink" --width="$WIDTH" --height="$HEIGHT" --no-buttons --text-align=center --text="Loading streams...\nPlease wait." &
     LOADINGBOXPID="$!"
-    # Get user's live followed streams using curl and Twitch's API.
-    # LIVELIST="$(curl -sH 'Cache-Control: no-cache' "https://api.twitch.tv/kraken/streams/followed?oauth_token=$TOKEN&limit=100")"
-    LIVELIST="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O -)"
+    # Use jq to parse the json from Twitch's API and get the info we want from it
+    wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r ".streams[] | .preview.$IMGPREVIEWSIZE, .channel.display_name, .channel.status, .channel.game, .viewers, .created_at, .stream_type" | sed "s%https://static-cdn.jtvnw.net/previews-ttv/%$HOME/.config/yad-twitch-streamlink/cache/%g;s%^live%Live%g;s%watch_party%VODCast%g" | sed -r 's#([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z#date -d"\1-\2-\3T\4:\5:\6Z" +"%a  %l:%M%p"#e' > "$HOME"/.config/yad-twitch-streamlink/cache/live-list.lst
     # Get count of live streams, name, display name, game, viewers, and stream type from $LIVELIST
     # output it to ~/.config/yad-twitch-streamlink/cache/live-list.lst sorted for yad --class="yad-twitch-streamlink" --list to read it
-    LIVECOUNT="$(echo "$LIVELIST" | grep -Po '"_total":.*?[^\\]"' |tr -d ',"' | cut -f2 -d":")"
-    case $IMGPREVIEWSIZE in
-        small)
-            PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"small":.*?[^\\]"' | tr -d '"' | cut -f2- -d":")"
-            PREVIEWIMGNAME="$(echo "$LIVELIST" | grep -Po '"small":.*?[^\\]"' | tr -d '"' | cut -f5 -d"/")"
-            ;;
-        medium)
-            PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f2- -d":")"
-            PREVIEWIMGNAME="$(echo "$LIVELIST" | grep -Po '"medium":.*?[^\\]"' | tr -d '"' | cut -f5 -d"/")"
-            ;;
-        large)
-            PREVIEWIMGURL="$(echo "$LIVELIST" | grep -Po '"large":.*?[^\\]"' | tr -d '"' | cut -f2- -d":")"
-            PREVIEWIMGNAME="$(echo "$LIVELIST" | grep -Po '"large":.*?[^\\]"' | tr -d '"' | cut -f5 -d"/")"
-            ;;
-    esac
-    LIVESTREAMS="$(echo "$LIVELIST" | grep -Po '"name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
-    LIVESTREAMSNAMES="$(echo "$LIVELIST" | grep -Po '"display_name":.*?[^\\]"' | tr -d '"' | cut -f2 -d":")"
-    TITLES="$( echo "$LIVELIST" | grep -Po '"status":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | sed "s:u003e:≫:g" | sed "s:u003c:≪:g" | sed "s:≪3:♥:g" | cut -f2- -d":")"
-    GAMES="$(echo "$LIVELIST" | grep -Po '"game":.*?[^\\]"' | tr -d '"' | sed "s:u0026:and:g" | cut -f2 -d":")"
-    VIEWERS="$(echo "$LIVELIST" | grep -Po '"viewers":.*?[^\\]"' | tr -d ',"' | cut -f2 -d":")"
-    STREAMTYPES="$(echo "$LIVELIST" | grep -Po '"stream_type":.*?[^\\]"' | tr -d '"' | sed "s:live:Live:g" | sed "s:watch_party:VODCast:g" | cut -f2 -d":")"
-    UTCSTARTTIME="$(echo "$LIVELIST" | grep -Po '"created_at":.*?[^\\]"' | tr -d '"' | cut -f2- -d":")"
-    STARTNUM=1
-    ODDSTARTNUM=1
-    for STREAMNAME in $LIVESTREAMSNAMES; do
-        if [[ "$IMGPREVIEWSENABLED" != "FALSE" ]]; then
-            echo ~/.config/yad-twitch-streamlink/cache/"$(echo "$PREVIEWIMGNAME" | sed -n "${STARTNUM}p")" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        else
-            echo ~/.config/yad-twitch-streamlink/ytsicon.png >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        fi
-        echo "     <span font="$LISTFONT">"$STREAMNAME"</span>     " >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "<span font="$LISTFONT">$(echo "$TITLES" | sed -n "${STARTNUM}p")</span>" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "     <span font="$LISTFONT">$(echo "$GAMES" | sed -n "${ODDSTARTNUM}p")</span>     " >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "     <span font="$LISTFONT">$(echo "$VIEWERS" | sed -n "${STARTNUM}p")</span>     " >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        STARTTIME="$(echo "$UTCSTARTTIME" | sed -n "${ODDSTARTNUM}p")"
-        echo "     <span font="$LISTFONT">$(date -d "$STARTTIME" "+%a  %l:%M%p")</span>     " >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        echo "     <span font="$LISTFONT">$(echo "$STREAMTYPES" | sed -n "${STARTNUM}p")</span>" >> ~/.config/yad-twitch-streamlink/cache/live-list.lst
-        STARTNUM="$((1+$STARTNUM))"
-        ODDSTARTNUM="$((2+$ODDSTARTNUM))"
-    done
+    LIVECOUNT="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r '._total')"
+    sed -i "3~7 s/.*$/# &/g;s/^[0-9A-Za-z].*/     <span font=$LISTFONT>&<\/span>/;s/^#.*/<span font=$LISTFONT>&<\/span>/" "$HOME"/.config/yad-twitch-streamlink/cache/live-list.lst
     # Download preview images if enabled
     if [ "$IMGPREVIEWSENABLED" = "TRUE" ]; then
         cd ~/.config/yad-twitch-streamlink/cache
-        echo "$PREVIEWIMGURL" | wget -qi -
+        wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r ".streams[].preview.$IMGPREVIEWSIZE" | wget -qi -
     fi
     # Close loading box
     kill -SIGTERM "$LOADINGBOXPID"
