@@ -6,7 +6,7 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, wget
 # License: GPLv2 only
 
-YTSVER="0.2.2"
+YTSVER="0.2.3"
 X="Change use jq to parse Twitch API"
 
 # Define variable defaults
@@ -221,7 +221,7 @@ main () { # main stream list
     yad --class="yad-twitch-streamlink" --window-icon="$HOME/.config/yad-twitch-streamlink/ytsicon.png" --info --timeout="30" --timeout-indicator="bottom" --no-focus --borders=300 --title="yad-twitch-streamlink" --width="$WIDTH" --height="$HEIGHT" --no-buttons --text-align=center --text="Loading streams...\nPlease wait." &
     LOADINGBOXPID="$!"
     # Use jq to parse the json from Twitch's API and get the info we want from it
-    wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r ".streams[] | .preview.$IMGPREVIEWSIZE, .channel.display_name, .channel.status, .channel.game, .viewers, .created_at, .stream_type" | sed "s%https://static-cdn.jtvnw.net/previews-ttv/%$HOME/.config/yad-twitch-streamlink/cache/%g;s%^live%Live%g;s%watch_party%VODCast%g" | sed -r 's#([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z#date -d"\1-\2-\3T\4:\5:\6Z" +"%a  %l:%M%p"#e' > "$HOME"/.config/yad-twitch-streamlink/cache/live-list.lst
+    wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r ".streams[] | .preview.$IMGPREVIEWSIZE, .channel.display_name, .channel.status, .channel.game, .viewers, .created_at, .stream_type" | sed "s%https://static-cdn.jtvnw.net/previews-ttv/%$HOME/.config/yad-twitch-streamlink/cache/%g;s%^live%Live%g;s%watch_party%VODCast%g" | sed -r 's#([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z#date -d"\1-\2-\3T\4:\5:\6Z" +"%a  %l:%M%p"#e' | tr '&' '+' > "$HOME"/.config/yad-twitch-streamlink/cache/live-list.lst
     # Get count of live streams, name, display name, game, viewers, and stream type from $LIVELIST
     # output it to ~/.config/yad-twitch-streamlink/cache/live-list.lst sorted for yad --class="yad-twitch-streamlink" --list to read it
     LIVECOUNT="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r '._total')"
