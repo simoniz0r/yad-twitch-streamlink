@@ -295,9 +295,6 @@ main () { # main stream list
             ;;
         0) # Execute chat program and Streamlink with configured player and player arguments
             STREAMSELECTION="$(echo "$STREAMSELECTION" | cut -f2 -d">" | cut -f1 -d"<")" # Remove font formatting from $STREAMSELECTION
-            if [ -f "$RUNNING_DIR/streamlink" ]; then
-                STREAMLINK="$RUNNING_DIR/streamlink"
-            fi
             rm ~/.config/yad-twitch-streamlink/cache/*
             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
             APPRUNNING="FALSE"
@@ -352,6 +349,9 @@ main () { # main stream list
                             ;;
                     esac
                 else
+                    if [ -f "$RUNNING_DIR/streamlink" ]; then
+                        STREAMLINK="$RUNNING_DIR/streamlink"
+                    fi
                     case $CHAT in # play streams with Streamlink with configured chat app
                         *chrome*|*chromium*)
                             $CHAT$CHATARGS --app="https://www.twitch.tv/"$STREAMSELECTION"/chat?popout=" & $STREAMLINK$STREAMLINKARGS --twitch-oauth-token $TOKEN --player "$PLAYER$PLAYERARGS" https://twitch.tv/"$STREAMSELECTION" "$QUALITY" || { yad --class="yad-twitch-streamlink" --window-icon="$HOME/.config/yad-twitch-streamlink/ytsicon.png" --error --borders=250 --text-align=center --title="yad-twitch-streamlink" --width="$WIDTH" --height="$HEIGHT" --button=gtk-ok:0 --text="Stream failed to load!"; }
