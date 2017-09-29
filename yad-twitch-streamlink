@@ -295,6 +295,9 @@ main () { # main stream list
             ;;
         0) # Execute chat program and Streamlink with configured player and player arguments
             STREAMSELECTION="$(echo "$STREAMSELECTION" | cut -f2 -d">" | cut -f1 -d"<")" # Remove font formatting from $STREAMSELECTION
+            if [ -f "$RUNNING_DIR/streamlink" ]; then
+                STREAMLINK="$RUNNING_DIR/streamlink"
+            fi
             rm ~/.config/yad-twitch-streamlink/cache/*
             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
             APPRUNNING="FALSE"
