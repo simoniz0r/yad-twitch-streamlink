@@ -455,6 +455,9 @@ case $1 in
         ;;
     *) # If token doesn't exist, open browser window to get Oauth token, and save Oauth token to config file
         if [ -z "$TOKEN" ]; then
+            if [ -f "$RUNNING_DIR/streamlink" ]; then
+                STREAMLINK="$RUNNING_DIR/streamlink"
+            fi
             yad --class="yad-twitch-streamlink" --window-icon="$HOME/.config/yad-twitch-streamlink/ytsicon.png" --borders=200 ---info --title="yad-twitch-streamlink" --button="Don't use Streamlink"\!gtk-close:1 --button="Generate token with Streamlink"\!gtk-ok:0 --width="$WIDTH" --height="$HEIGHT" --text="Welcome to yad-twitch-streamlink! \n\nYour Twitch Oauth token is not yet stored.  Streamlink will open browser window with a website that will allow you to get your token.\nCopy the token to your clipboard and paste it into the next window that is displayed after closing the browser window.\n\nIf you do not have Streamlink installed and do not plan on using it, click 'Don't use Streamlink' and a different website will be opened.\nThis token cannot be used with Streamlink, so if you wish to use Streamlink later, you will have to generate a new token.  An option for this is provided in yad-twitch-streamlink's settings menu."
             case $? in
                 0)
