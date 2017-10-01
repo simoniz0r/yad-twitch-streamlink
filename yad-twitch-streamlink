@@ -14,7 +14,11 @@ APPRUNNING="FALSE"
 STREAMRUNNING="FALSE"
 NOTIFRUNNING="FALSE"
 TRAYRUNNING="FALSE"
-YTSLOC="$0"
+if [ -f "/usr/local/bin/yad-twitch-streamlink" ]; then
+    YTSLOC="/usr/local/bin/yad-twitch-streamlink"
+else
+    YTSLOC="$0"
+fi
 RUNNING_DIR="$(dirname $(readlink -f $YTSLOC))"
 WIDTH="1920"
 HEIGHT="1080"
