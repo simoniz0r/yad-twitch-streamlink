@@ -6,8 +6,8 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, wget
 # License: GPLv2 only
 
-YTSVER="0.2.3"
-X="Change use jq to parse Twitch API"
+YTSVER="0.2.4"
+X="Fix notifications if list couldn't be populated first check"
 
 # Define variable defaults
 APPRUNNING="FALSE"
@@ -49,7 +49,7 @@ savesettingsfunc () { # save all settings to ~/.config/yad-twitch-streamlink/yad
     echo "TRAYRUNNING="\"$TRAYRUNNING\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "NOTIFPID="\"$NOTIFPID\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "TRAYPID="\"$TRAYPID\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-    echo "YTSLOC="\"$YTSLOC\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
+    echo "YTSLOC="\"$(readlink -f $YTSLOC)\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "# " >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "# yad-twitch-streamlink settings.  These are safe to edit if you know what you're doing." >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "# Note: Arguments NEED a space before them in order to function." >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
@@ -179,7 +179,7 @@ notificationsfunc () { # Display notifications for new live streams.
         LIVELISTNEW="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r ".streams[].channel.display_name" | sort)"
         if [[ "$LIVELIST" != "$LIVELISTNEW" ]]; then
             NEWSTREAMS="$(diff <(echo "$LIVELIST1") <(echo "$LIVELISTNEW") | grep '> ' | tr -d '>')"
-            if [ ! -z "$NEWSTREAMS" ]; then
+            if [ ! -z "$NEWSTREAMS" ] && [ ! -z "$LIVELIST1" ]; then
                 kdialog --title "Now Live:" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:1 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
                 case $? in
                     1)
@@ -407,12 +407,9 @@ main () { # main stream list
             *) # exit
             rm ~/.config/yad-twitch-streamlink/cache/*
             . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-            if [ "$STREAMRUNNING" = "FALSE" ]; then
-                kill "$NOTIFPID" "$TRAYPID"
-                TRAYRUNNING="FALSE"
-                NOTIFRUNNING="FALSE"
-                savesettingsfunc
-            fi
+            kill "$NOTIFPID" "$TRAYPID"
+            TRAYRUNNING="FALSE"
+            NOTIFRUNNING="FALSE"
             APPRUNNING="FALSE"
             savesettingsfunc
             exit 0
@@ -428,7 +425,7 @@ startfunc () { # Function to set all processes running to FALSE in config file i
     savesettingsfunc
     kill "$TRAYPID"
     kill "$NOTIFPID"
-    exec "$YTSLOC"
+    exec "$0"
 }
 
 # Load config file if it exists
