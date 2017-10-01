@@ -49,7 +49,7 @@ savesettingsfunc () { # save all settings to ~/.config/yad-twitch-streamlink/yad
     echo "TRAYRUNNING="\"$TRAYRUNNING\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "NOTIFPID="\"$NOTIFPID\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "TRAYPID="\"$TRAYPID\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-    echo "YTSLOC="\"$(readlink -f $YTSLOC)\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
+    echo "YTSLOC="\"$(readlink -f $0)\""" >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "# " >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "# yad-twitch-streamlink settings.  These are safe to edit if you know what you're doing." >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
     echo "# Note: Arguments NEED a space before them in order to function." >> ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
