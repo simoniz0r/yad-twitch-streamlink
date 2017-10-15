@@ -183,7 +183,7 @@ notificationsfunc () { # Display notifications for new live streams.
         LIVELIST1="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r ".streams[].channel.display_name" | sort)"
         sleep "$NOTIFTIME"
         LIVELISTNEW="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r ".streams[].channel.display_name" | sort)"
-        if [[ "$LIVELIST" != "$LIVELISTNEW" ]]; then
+        if [[ "$LIVELIST1" != "$LIVELISTNEW" ]]; then
             NEWSTREAMS="$(diff <(echo "$LIVELIST1") <(echo "$LIVELISTNEW") | grep '> ' | tr -d '>')"
             if [ ! -z "$NEWSTREAMS" ] && [ ! -z "$LIVELIST1" ]; then
                 kdialog --title "Now Live:" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:1 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
