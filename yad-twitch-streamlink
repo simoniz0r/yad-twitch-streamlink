@@ -182,7 +182,7 @@ notificationsfunc () { # Display notifications for new live streams.
         if [[ "$LIVELIST1" != "$LIVELISTNEW" ]]; then
             NEWSTREAMS="$(diff <(echo "$LIVELIST1") <(echo "$LIVELISTNEW") | grep '> ' | tr -d '>')"
             if [ ! -z "$NEWSTREAMS" ] && [ ! -z "$LIVELIST1" ]; then
-                kdialog --title "Now Live:" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || notify-send "Now Live:" "$NEWSTREAMS $NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:1 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
+                kdialog --title "Now Live:" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || notify-send "Now Live:" "$NEWSTREAMS" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:1 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
                 case $? in
                     1)
                         . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
