@@ -6,8 +6,8 @@
 # Dependencies: Streamlink (optional; mpv can also be used directly for stream playback), yad, GNU coreutils, wget
 # License: GPLv2 only
 
-YTSVER="0.2.4"
-X="Fix notifications if list couldn't be populated first check"
+YTSVER="0.2.5"
+X="Fix issues with AppImage"
 
 # Define variable defaults
 APPRUNNING="FALSE"
@@ -176,13 +176,13 @@ settingsfunc () { # Edit settings for yad-twitch-streamlink, generate new token,
 notificationsfunc () { # Display notifications for new live streams.
     while true; do
         . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
-        LIVELIST1="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r ".streams[].channel.display_name" | sort)"
+        LIVELIST1="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | jq -r ".streams[].channel.display_name" | sort)"
         sleep "$NOTIFTIME"
-        LIVELISTNEW="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | "$RUNNING_DIR"/jq -r ".streams[].channel.display_name" | sort)"
+        LIVELISTNEW="$(wget --quiet --header="Authorization: OAuth $TOKEN" "https://api.twitch.tv/kraken/streams/followed?limit=100" -O - | jq -r ".streams[].channel.display_name" | sort)"
         if [[ "$LIVELIST1" != "$LIVELISTNEW" ]]; then
             NEWSTREAMS="$(diff <(echo "$LIVELIST1") <(echo "$LIVELISTNEW") | grep '> ' | tr -d '>')"
             if [ ! -z "$NEWSTREAMS" ] && [ ! -z "$LIVELIST1" ]; then
-                kdialog --title "Now Live:" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:1 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
+                kdialog --title "Now Live:" --passivepopup "$NEWSTREAMS" "$NOTIFTIMEOUT" || notify-send "Now Live:" "$NEWSTREAMS $NOTIFTIMEOUT" || yad --class="yad-twitch-notification" --info --title="yad-twitch-notification" --skip-taskbar --undecorated --geometry=200x150-1-1 --on-top --no-focus --button="Open Stream List"\!gtk-ok:1 --timeout="$NOTIFTIMEOUT" --text="Now live\n$NEWSTREAMS"
                 case $? in
                     1)
                         . ~/.config/yad-twitch-streamlink/yad-twitch-streamlink.conf
